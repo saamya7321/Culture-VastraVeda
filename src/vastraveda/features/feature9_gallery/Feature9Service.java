@@ -3,6 +3,7 @@ package vastraveda.features.feature9_gallery;
 import vastraveda.core.data.DataStore;
 import vastraveda.core.models.ClothingItem;
 import java.util.List;
+ update-datastore
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
@@ -64,15 +65,27 @@ public class Feature9Service {
     /**
      * Required by Main branch - Retrieves detail for a specific item by name.
      */
+=======
+
+public class Feature9Service {
+
+    public List<ClothingItem> getAllGarments() {
+        return DataStore.getAllItems();
+    }
+
+ main
     public ClothingItem getItemDetail(String name) {
         return DataStore.getAllItems().stream()
                 .filter(item -> item.getName().equals(name))
                 .findFirst()
                 .orElse(null);
     }
+ update-datastore
 
     public List<ClothingItem> filterItems(String text, String selectedItem) {
       // TODO Auto-generated method stub
       throw new UnsupportedOperationException("Unimplemented method 'filterItems'");
     }
+
+ main
 }
