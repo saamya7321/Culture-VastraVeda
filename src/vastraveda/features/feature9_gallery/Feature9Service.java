@@ -21,6 +21,13 @@ public class Feature9Service {
     }
 
     /**
+     * Alias for getAllItems to maintain compatibility with the main branch.
+     */
+    public List<ClothingItem> getAllGarments() {
+        return getAllItems();
+    }
+
+    /**
      * Groups clothing items by their region (e.g., "North India", "South India").
      * Useful for creating categorized sections in the UI.
      */
@@ -54,5 +61,15 @@ public class Feature9Service {
                                 item.getRegion().toLowerCase().contains(query) ||
                                 item.getDescription().toLowerCase().contains(query))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves detail for a specific item by name (Required by Main branch).
+     */
+    public ClothingItem getItemDetail(String name) {
+        return DataStore.getAllItems().stream()
+                .filter(item -> item.getName().equals(name))
+                .findFirst()
+                .orElse(null);
     }
 }
