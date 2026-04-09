@@ -2,33 +2,23 @@ package vastraveda.features.feature9_gallery;
 
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.data.DataStore;
 import vastraveda.core.models.ClothingItem;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 9 — Visual Gallery                                        ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • GridLayout(0,3) of item cards — each card: emoji(42pt), name, region, tags.║
- * ║  • Toggle button to switch between Grid view and List view.  ║
- * ║  • Live search via DocumentListener and gender filter dropdown.║
- * ║  • Click a card to open detail dialog. Hover darkens card background.║
- * ║  • See README.md in this folder for card design and layout.  ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature9UI.java       ← Your Swing UI code here              ║
- * ║     Feature9Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
- */
 public class Feature9UI extends BaseUI implements Feature {
 
+    private static final Color COLOR_BG_ALT = null;
     private final Feature9Service service = new Feature9Service();
+    private JPanel galleryPanel;
+    private JTextField searchField;
+    private JComboBox<String> genderDropdown;
+    private boolean isGridView = true;
 
     public Feature9UI() {
         super("Visual Gallery");
@@ -37,47 +27,109 @@ public class Feature9UI extends BaseUI implements Feature {
 
     @Override
     public void render() {
+        refreshGallery();
         setVisible(true);
     }
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🖼  Visual Gallery", "Browse a visual gallery of Indian clothing styles."), BorderLayout.NORTH);
+        add(createHeader("🖼 Visual Gallery", "Browse Indian clothing styles."), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        // --- Toolbar ---
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        toolbar.setBackground(COLOR_BG_ALT);
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>🖼</span><br><br>" +
-            "<b style='font-size:16px'>Visual Gallery</b><br><br>" +
-            "<span style='color:gray'>Browse a visual gallery of Indian clothing styles.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
+        searchField = new JTextField(15);
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { refreshGallery(); }
+            public void removeUpdate(DocumentEvent e) { refreshGallery(); }
+            public void changedUpdate(DocumentEvent e) { refreshGallery(); }
+        });
 
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
+        genderDropdown = new JComboBox<>(new String[]{"All", "Male", "Female", "Unisex"});
+        genderDropdown.addActionListener(e -> refreshGallery());
 
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
+        JButton toggleBtn = createStyledButton("Toggle View", COLOR_PRIMARY, Color.WHITE);
+        toggleBtn.addActionListener(e -> {
+            isGridView = !isGridView;
+            refreshGallery();
+        });
 
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
+        toolbar.add(new JLabel("Search:"));
+        toolbar.add(searchField);
+        toolbar.add(new JLabel("Gender:"));
+        toolbar.add(genderDropdown);
+        toolbar.add(toggleBtn);
+
+        add(toolbar, BorderLayout.NORTH);
+
+        // --- Gallery Display ---
+        galleryPanel = new JPanel();
+        galleryPanel.setBackground(COLOR_BG);
+        JScrollPane scrollPane = new JScrollPane(galleryPanel);
+        scrollPane.setBorder(null);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
-    private void showItemList() {
-        List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
-        for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
+    private void refreshGallery() {
+        galleryPanel.removeAll();
+        List<ClothingItem> items = service.filterItems(searchField.getText(), (String) genderDropdown.getSelectedItem());
+
+        if (isGridView) {
+            galleryPanel.setLayout(new GridLayout(0, 3, 15, 15));
+        } else {
+            galleryPanel.setLayout(new BoxLayout(galleryPanel, BoxLayout.Y_AXIS));
         }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Visual Gallery", JOptionPane.PLAIN_MESSAGE);
+
+        for (ClothingItem item : items) {
+            galleryPanel.add(createItemCard(item));
+        }
+
+        galleryPanel.revalidate();
+        galleryPanel.repaint();
+    }
+
+    private JPanel createItemCard(ClothingItem item) {
+        JPanel card = new JPanel(new BorderLayout(10, 10));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
+        
+        if (!isGridView) {
+            card.setMaximumSize(new Dimension(800, 100));
+        }
+
+        JLabel iconLabel = new JLabel(item.getImageIcon(), JLabel.CENTER);
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 42));
+        card.add(iconLabel, BorderLayout.CENTER);
+
+        JPanel info = new JPanel(new GridLayout(2, 1));
+        info.setOpaque(false);
+        JLabel nameLabel = new JLabel(item.getName(), JLabel.CENTER);
+        nameLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        JLabel regionLabel = new JLabel(item.getRegion(), JLabel.CENTER);
+        regionLabel.setForeground(Color.GRAY);
+        
+        info.add(nameLabel);
+        info.add(regionLabel);
+        card.add(info, BorderLayout.SOUTH);
+
+        card.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { card.setBackground(new Color(245, 245, 245)); }
+            public void mouseExited(MouseEvent e) { card.setBackground(Color.WHITE); }
+            public void mouseClicked(MouseEvent e) { showDetail(item); }
+        });
+
+        return card;
+    }
+
+    private void showDetail(ClothingItem item) {
+        // Removed getFabric() to prevent undefined method errors
+        JOptionPane.showMessageDialog(this, 
+            "<html><body style='width: 200px;'>" +
+            "<h2>" + item.getName() + "</h2>" +
+            "<b>Region:</b> " + item.getRegion() + "<br><br>" +
+            "<i>" + item.getDescription() + "</i>" +
+            "</body></html>", 
+            "Item Details", JOptionPane.INFORMATION_MESSAGE);
     }
 }

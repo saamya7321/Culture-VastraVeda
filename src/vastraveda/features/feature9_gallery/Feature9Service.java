@@ -21,15 +21,14 @@ public class Feature9Service {
     }
 
     /**
-     * Alias for getAllItems to maintain compatibility with the main branch.
+     * Alias for compatibility with the main branch.
      */
     public List<ClothingItem> getAllGarments() {
         return getAllItems();
     }
 
     /**
-     * Groups clothing items by their region (e.g., "North India", "South India").
-     * Useful for creating categorized sections in the UI.
+     * Groups clothing items by their region.
      */
     public Map<String, List<ClothingItem>> getGalleryByRegion() {
         return DataStore.getAllItems().stream()
@@ -38,12 +37,12 @@ public class Feature9Service {
 
     /**
      * Filters the gallery based on the material/fabric.
-     * @param fabricType The type of fabric (e.g., "Silk", "Cotton")
      */
     public List<ClothingItem> filterByFabric(String fabricType) {
         List<ClothingItem> filteredList = new ArrayList<>();
         for (ClothingItem item : DataStore.getAllItems()) {
-            if (item.getFabric().equalsIgnoreCase(fabricType)) {
+            // This will now work because we added getFabric() to ClothingItem.java
+            if (item.getFabricType().equalsIgnoreCase(fabricType)) {
                 filteredList.add(item);
             }
         }
@@ -52,7 +51,6 @@ public class Feature9Service {
 
     /**
      * Searches the gallery for a specific keyword.
-     * Matches against name, region, or description.
      */
     public List<ClothingItem> searchGallery(String keyword) {
         String query = keyword.toLowerCase();
@@ -64,12 +62,17 @@ public class Feature9Service {
     }
 
     /**
-     * Retrieves detail for a specific item by name (Required by Main branch).
+     * Required by Main branch - Retrieves detail for a specific item by name.
      */
     public ClothingItem getItemDetail(String name) {
         return DataStore.getAllItems().stream()
                 .filter(item -> item.getName().equals(name))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public List<ClothingItem> filterItems(String text, String selectedItem) {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'filterItems'");
     }
 }
